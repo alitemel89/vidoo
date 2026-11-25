@@ -57,7 +57,7 @@ export default tseslint.config(
     files: ['src/**/*.ts'],
     plugins: { vidoo: { rules: { 'member-names': memberNames } } },
     rules: {
-      'vidoo/signal-names': 'error',
+      'vidoo/member-names': 'error',
       '@typescript-eslint/explicit-member-accessibility': ['error', {
         accessibility: 'explicit',
         overrides: { constructors: 'no-public' },
