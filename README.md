@@ -1,4 +1,8 @@
-# Vidoo Android MVP
+# Vidoo
+
+The [vehicle listing video web app](web/README.md) creates a short video from 3–5 photos and unlocks the MP4 after a one-time Stripe payment.
+
+## Android starter
 
 Kotlin + Jetpack Compose starter. Open this folder in Android Studio (JDK 17) and sync Gradle.
 
