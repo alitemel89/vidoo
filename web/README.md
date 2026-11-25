@@ -1,14 +1,16 @@
 # Vidoo araç ilan videosu
 
-Türkçe web uygulaması, 3–5 araç fotoğrafından 9–15 saniyelik bir ilan videosu oluşturur. Önizleme 360 × 640 ve filigranlıdır. Tek seferlik Stripe Checkout ödemesinden sonra 720 × 1280 H.264 MP4 indirilir. Varsayılan fiyat 4,99 €.
+Angular 22 ve TypeScript ile hazırlanan Türkçe web uygulaması, 3–5 araç fotoğrafından 9–15 saniyelik bir ilan videosu oluşturur. Önizleme 360 × 640 ve filigranlıdır. Tek seferlik Stripe Checkout ödemesinden sonra 720 × 1280 H.264 MP4 indirilir. Varsayılan fiyat 4,99 €.
 
 ## Çalıştırma
 
-Node.js 22 veya üzeri, FFmpeg (`libx264` ve `drawtext` destekli) ve sistem yazı tipi gereklidir.
+Node.js 22.22.3+ (22.x), 24.15.0+ (24.x) veya 26.x, FFmpeg (`libx264` ve `drawtext` destekli) ve sistem yazı tipi gereklidir.
 
 ```sh
 cd web
-node server.mjs
+npm ci
+npm run build
+npm start
 ```
 
 [localhost:3000](http://localhost:3000) adresini açın. Ödeme aracını denemek için `STRIPE_SECRET_KEY` değişkenini Stripe test anahtarıyla sunucu ortamına ekleyin. Anahtar yoksa yükleme ve önizleme kullanılabilir.
@@ -26,5 +28,5 @@ node server.mjs
 Yerel entegrasyon testi gerçek FFmpeg çıktısı ve sahte Stripe API yanıtlarıyla çalışır.
 
 ```sh
-node --test
+npm test
 ```

@@ -7,7 +7,7 @@ import { pipeline } from 'node:stream/promises';
 import { fileURLToPath } from 'node:url';
 import { renderVideos } from './render.mjs';
 
-const publicDir = fileURLToPath(new URL('./public/', import.meta.url));
+const publicDir = fileURLToPath(new URL('./dist/browser/', import.meta.url));
 const maxPhotoBytes = 8 * 1024 * 1024;
 const maxBodyBytes = 5 * maxPhotoBytes + 64 * 1024;
 const hour = 60 * 60 * 1000;
@@ -157,14 +157,15 @@ export async function createVidooServer({
     try {
       const url = new URL(request.url, origin);
       const method = request.method;
-      const assets = {
-        '/': ['index.html', 'text/html'],
-        '/style.css': ['style.css', 'text/css'],
-        '/app.js': ['app.js', 'text/javascript'],
-      };
-      if (method === 'GET' && Object.hasOwn(assets, url.pathname)) {
-        const [file, type] = assets[url.pathname];
-        const content = await readFile(resolve(publicDir, file));
+      if (method === 'GET' && (url.pathname === '/' || /^\/[a-zA-Z0-9_-]+\.(js|css)$/.test(url.pathname))) {
+        const file = url.pathname === '/' ? 'index.html' : url.pathname.slice(1);
+        const type = file.endsWith('.css') ? 'text/css' :
+          file.endsWith('.js') ? 'text/javascript' : 'text/html';
+        const content = await readFile(resolve(publicDir, file)).catch(error => {
+          if (error.code !== 'ENOENT') throw error;
+          if (file === 'index.html') throw new HttpError(503, 'Web arayüzü hazırlanmadı. Önce npm run build çalıştırın.');
+          throw new HttpError(404, 'Dosya bulunamadı.');
+        });
         response.writeHead(200, { 'Content-Type': `${type}; charset=utf-8` }).end(content);
         return;
       }

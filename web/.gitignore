@@ -1,2 +1,6 @@
 vidoo-data/
 .env
+
+node_modules/
+dist/
+.angular/
