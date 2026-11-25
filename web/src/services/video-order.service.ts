@@ -1,8 +1,17 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
-import { Order, Pricing, VidooApi, errorMessage } from './vidoo-api';
+import { MAX_PHOTOS, MIN_PHOTOS } from '../models/photo';
+import { Order, Pricing } from '../models/video-order';
+import { VidooApi } from './vidoo-api.service';
 
 const storageKey = 'vidoo-order';
+
+function errorMessage(error: unknown) {
+  if (error instanceof HttpErrorResponse && typeof error.error?.error === 'string') {
+    return error.error.error;
+  }
+  return 'Bir sorun oluştu. Tekrar deneyin.';
+}
 
 @Injectable()
 export class VideoOrder {
@@ -12,13 +21,18 @@ export class VideoOrder {
   readonly order = this.currentOrder.asReadonly();
   readonly pricing = computed(() => this.updatedPricing() ??
     (this.api.pricing.hasValue() ? this.api.pricing.value() : null));
-  readonly creating = signal(false);
-  readonly checkingOut = signal(false);
-  readonly checkingPayment = signal(false);
-  readonly uploadMessage = signal('');
-  readonly paymentMessage = signal('');
-  readonly retryPayment = signal(false);
-  readonly download = signal<string | null>(null);
+  private readonly creatingState = signal(false);
+  readonly creating = this.creatingState.asReadonly();
+  private readonly checkingOutState = signal(false);
+  readonly checkingOut = this.checkingOutState.asReadonly();
+  private readonly checkingPayment = signal(false);
+  private readonly uploadMessageState = signal('');
+  readonly uploadMessage = this.uploadMessageState.asReadonly();
+  private readonly paymentMessage = signal('');
+  private readonly retryPaymentState = signal(false);
+  readonly retryPayment = this.retryPaymentState.asReadonly();
+  private readonly downloadState = signal<string | null>(null);
+  readonly download = this.downloadState.asReadonly();
   readonly preview = computed(() => {
     const order = this.order();
     return order ? this.api.preview(order.id) : null;
@@ -57,27 +71,27 @@ export class VideoOrder {
   }
 
   async create(files: readonly File[]) {
-    if (this.creating() || this.checkingOut() || files.length < 3 || files.length > 5) return;
-    this.creating.set(true);
-    this.uploadMessage.set('Fotoğraflar yükleniyor ve video hazırlanıyor…');
+    if (this.creating() || this.checkingOut() || files.length < MIN_PHOTOS || files.length > MAX_PHOTOS) return;
+    this.creatingState.set(true);
+    this.uploadMessageState.set('Fotoğraflar yükleniyor ve video hazırlanıyor…');
     try {
       const { order, pricing } = await this.api.create(files);
       this.updatedPricing.set(pricing);
       this.showOrder(order);
       history.replaceState(null, '', `/?job=${order.id}`);
-      this.uploadMessage.set('Önizleme hazır.');
+      this.uploadMessageState.set('Önizleme hazır.');
       return true;
     } catch (error) {
-      this.uploadMessage.set(errorMessage(error));
+      this.uploadMessageState.set(errorMessage(error));
     } finally {
-      this.creating.set(false);
+      this.creatingState.set(false);
     }
   }
 
   async checkout() {
     const order = this.order();
     if (!order || !this.canBuy()) return;
-    this.checkingOut.set(true);
+    this.checkingOutState.set(true);
     this.paymentMessage.set('Stripe ödeme sayfası açılıyor…');
     try {
       const result = await this.api.checkout(order.id);
@@ -87,7 +101,7 @@ export class VideoOrder {
       this.paymentMessage.set(errorMessage(error));
       if (error instanceof HttpErrorResponse && error.status === 409) await this.checkPayment();
     } finally {
-      this.checkingOut.set(false);
+      this.checkingOutState.set(false);
     }
   }
 
@@ -95,16 +109,16 @@ export class VideoOrder {
     const order = this.order();
     if (!order?.sessionId || this.checkingPayment()) return;
     this.checkingPayment.set(true);
-    this.retryPayment.set(false);
+    this.retryPaymentState.set(false);
     try {
       const paid = await this.api.payment(order.id, order.sessionId);
       if (!paid || this.order() !== order) return;
-      this.download.set(this.api.download(order.id, order.sessionId));
+      this.downloadState.set(this.api.download(order.id, order.sessionId));
       this.paymentMessage.set('Ödeme onaylandı. Videoyu önizlemenin oluşturulduğu tarihten itibaren 7 gün içinde indirebilirsiniz.');
     } catch (error) {
       if (this.order() !== order) return;
       this.paymentMessage.set(errorMessage(error));
-      this.retryPayment.set(!(error instanceof HttpErrorResponse) || ![402, 404].includes(error.status));
+      this.retryPaymentState.set(!(error instanceof HttpErrorResponse) || ![402, 404].includes(error.status));
     } finally {
       this.checkingPayment.set(false);
     }
@@ -117,8 +131,8 @@ export class VideoOrder {
   private showOrder(order: Order) {
     this.currentOrder.set(order);
     this.remember(order);
-    this.download.set(null);
-    this.retryPayment.set(false);
+    this.downloadState.set(null);
+    this.retryPaymentState.set(false);
     this.paymentMessage.set('');
   }
 

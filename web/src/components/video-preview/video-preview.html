@@ -1,0 +1,29 @@
+@let state = view();
+<section class="panel" aria-labelledby="preview-heading">
+  <div class="flex items-center justify-between gap-2">
+    <h2 id="preview-heading">Video önizleme</h2>
+    <span class="shrink-0 text-xs text-muted">9:16 · MP4</span>
+  </div>
+  <div class="my-3 grid h-[270px] place-items-center overflow-hidden rounded-xl bg-[#120d0a]">
+    @if (state.preview; as source) {
+      <video #player id="video" class="h-full w-full" [src]="source" controls playsinline preload="metadata" (error)="video.previewError()"></video>
+    } @else {
+      <p class="text-center text-sm"><span class="block text-4xl/none text-accent" aria-hidden="true">▷</span>Önizleme burada oynatılır</p>
+    }
+  </div>
+  <div class="flex items-center justify-between gap-2">
+    <div>
+      <strong class="text-xl">{{ state.price === null ? '—' : (state.price | currency:'EUR':'symbol':'1.2-2':'tr') }}</strong>
+      <small class="block text-[0.82rem] text-muted">Tek video · 720 × 1280</small>
+    </div>
+    @if (state.download; as url) {
+      <a class="primary" [href]="url">Videoyu indir</a>
+    } @else {
+      <button type="button" class="primary" [disabled]="!state.canBuy" (click)="video.checkout()">Ödemeye geç</button>
+    }
+  </div>
+  <p role="status" aria-live="polite">{{ state.paymentMessage }}</p>
+  @if (state.retryPayment) {
+    <button type="button" (click)="video.checkPayment()">Ödemeyi tekrar kontrol et</button>
+  }
+</section>

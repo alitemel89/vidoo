@@ -1,27 +1,10 @@
-import { HttpClient, HttpErrorResponse, HttpParams, httpResource } from '@angular/common/http';
+import { HttpClient, HttpParams, httpResource } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { firstValueFrom, map } from 'rxjs';
-
-export interface Pricing {
-  amount: number;
-  checkoutAvailable: boolean;
-}
-
-export interface Order {
-  id: string;
-  amount: number;
-  sessionId?: string;
-}
+import { Order, Pricing } from '../models/video-order';
 
 function orderPath(id: string) {
   return `/api/jobs/${id}`;
-}
-
-export function errorMessage(error: unknown) {
-  if (error instanceof HttpErrorResponse && typeof error.error?.error === 'string') {
-    return error.error.error;
-  }
-  return 'Bir sorun oluştu. Tekrar deneyin.';
 }
 
 @Injectable({ providedIn: 'root' })
