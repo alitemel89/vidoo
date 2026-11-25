@@ -38,6 +38,6 @@ npm test
 - Özel sinyal: `private readonly _$loading = signal(false)`
 - Dışarı açılan sinyal: `public readonly $loading = this._$loading.asReadonly()`
 - Özel metot: `private _load()`
-- Veri henüz yoksa: `signal<Order>()`. Başlangıç durumu belli olan bayraklar, listeler ve metinler sırasıyla `false`, `[]` ve `''` ile başlar.
+- Veri henüz yoksa: `signal<Order | undefined>(undefined)`. Başlangıç durumu belli olan bayraklar, listeler ve metinler sırasıyla `false`, `[]` ve `''` ile başlar.
 
 Uygulamaya ait servis referansları `selectionService` veya `private readonly _selectionService` biçiminde adlandırılır. Veri tipleri `src/models/`, ortak sabitler `src/constants/` altındadır.
