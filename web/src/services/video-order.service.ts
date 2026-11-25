@@ -1,10 +1,10 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
-import { MAX_PHOTOS, MIN_PHOTOS } from '../models/photo';
-import { Order, Pricing } from '../models/video-order';
+import { MAX_PHOTOS, MIN_PHOTOS } from '../constants/photo.constants';
+import { ORDER_STORAGE_KEY } from '../constants/video-order.constants';
+import type { Pricing } from '../models/pricing';
+import type { Order } from '../models/video-order';
 import { VidooApi } from './vidoo-api.service';
-
-const storageKey = 'vidoo-order';
 
 function errorMessage(error: unknown) {
   if (error instanceof HttpErrorResponse && typeof error.error?.error === 'string') {
@@ -15,12 +15,12 @@ function errorMessage(error: unknown) {
 
 @Injectable()
 export class VideoOrder {
-  private readonly api = inject(VidooApi);
+  private readonly _vidooApiService = inject(VidooApi);
   private readonly _$order = signal<Order>();
   private readonly _$updatedPricing = signal<Pricing>();
   public readonly $order = this._$order.asReadonly();
   public readonly $pricing = computed(() => this._$updatedPricing() ??
-    (this.api.$pricing.hasValue() ? this.api.$pricing.value() : undefined));
+    (this._vidooApiService.$pricing.hasValue() ? this._vidooApiService.$pricing.value() : undefined));
   public readonly $priceInEuros = computed(() => {
     const amount = this.$order()?.amount ?? this.$pricing()?.amount;
     return amount === undefined ? undefined : amount / 100;
@@ -39,12 +39,12 @@ export class VideoOrder {
   public readonly $download = this._$download.asReadonly();
   public readonly $preview = computed(() => {
     const order = this.$order();
-    return order ? this.api.preview(order.id) : undefined;
+    return order ? this._vidooApiService.preview(order.id) : undefined;
   });
   public readonly $paymentStatus = computed(() => {
     const message = this._$paymentMessage();
     if (message) return message;
-    if (this.api.$pricing.error() && !this.$pricing()) return 'Ödeme ayarları yüklenemedi.';
+    if (this._vidooApiService.$pricing.error() && !this.$pricing()) return 'Ödeme ayarları yüklenemedi.';
     return this.$order() && this.$pricing()?.checkoutAvailable === false
       ? 'Ödeme şu anda kullanılamıyor.'
       : '';
@@ -60,7 +60,7 @@ export class VideoOrder {
     const id = params.get('job') ?? cached?.id;
     if (!id || !/^[a-f0-9]{48}$/.test(id)) return;
     try {
-      const order = await this.api.details(id);
+      const order = await this._vidooApiService.details(id);
       if (this.$order()) return;
       order.sessionId = params.get('session') ?? (cached?.id === id ? cached.sessionId : undefined);
       this._showOrder(order);
@@ -79,7 +79,7 @@ export class VideoOrder {
     this._$creating.set(true);
     this._$uploadMessage.set('Fotoğraflar yükleniyor ve video hazırlanıyor…');
     try {
-      const { order, pricing } = await this.api.create(files);
+      const { order, pricing } = await this._vidooApiService.create(files);
       this._$updatedPricing.set(pricing);
       this._showOrder(order);
       history.replaceState(null, '', `/?job=${order.id}`);
@@ -98,7 +98,7 @@ export class VideoOrder {
     this._$checkingOut.set(true);
     this._$paymentMessage.set('Stripe ödeme sayfası açılıyor…');
     try {
-      const result = await this.api.checkout(order.id);
+      const result = await this._vidooApiService.checkout(order.id);
       this._remember({ ...order, sessionId: result.sessionId });
       location.assign(result.url);
     } catch (error) {
@@ -115,9 +115,9 @@ export class VideoOrder {
     this._$checkingPayment.set(true);
     this._$retryPayment.set(false);
     try {
-      const paid = await this.api.payment(order.id, order.sessionId);
+      const paid = await this._vidooApiService.payment(order.id, order.sessionId);
       if (!paid || this.$order() !== order) return;
-      this._$download.set(this.api.download(order.id, order.sessionId));
+      this._$download.set(this._vidooApiService.download(order.id, order.sessionId));
       this._$paymentMessage.set('Ödeme onaylandı. Videoyu önizlemenin oluşturulduğu tarihten itibaren 7 gün içinde indirebilirsiniz.');
     } catch (error) {
       if (this.$order() !== order) return;
@@ -141,10 +141,10 @@ export class VideoOrder {
   }
 
   private _remember(order: Order) {
-    try { localStorage.setItem(storageKey, JSON.stringify(order)); } catch {}
+    try { localStorage.setItem(ORDER_STORAGE_KEY, JSON.stringify(order)); } catch {}
   }
 
   private _savedOrder(): Order | null {
-    try { return JSON.parse(localStorage.getItem(storageKey) ?? 'null'); } catch { return null; }
+    try { return JSON.parse(localStorage.getItem(ORDER_STORAGE_KEY) ?? 'null'); } catch { return null; }
   }
 }

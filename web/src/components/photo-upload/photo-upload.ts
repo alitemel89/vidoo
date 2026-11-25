@@ -8,7 +8,7 @@ import { PhotoSelection } from '../../services/photo-selection.service';
   providers: [PhotoSelection],
 })
 export class PhotoUpload {
-  protected readonly selection = inject(PhotoSelection);
+  protected readonly selectionService = inject(PhotoSelection);
   private readonly _$dragging = signal(false);
   protected readonly $dragging = this._$dragging.asReadonly();
   private readonly _$fileInput = viewChild.required<ElementRef<HTMLInputElement>>('files');
@@ -17,23 +17,23 @@ export class PhotoUpload {
   public readonly previewCreated = output<void>();
 
   protected async createPreview() {
-    if (await this.selection.createPreview()) this.previewCreated.emit();
+    if (await this.selectionService.createPreview()) this.previewCreated.emit();
   }
 
   protected choosePhotos(input: HTMLInputElement) {
-    if (input.files) this.selection.addPhotos(Array.from(input.files));
+    if (input.files) this.selectionService.addPhotos(Array.from(input.files));
     input.value = '';
   }
 
   protected handleDrag(event: DragEvent) {
     event.preventDefault();
-    if (!this.selection.$creating()) this._$dragging.set(true);
+    if (!this.selectionService.$creating()) this._$dragging.set(true);
   }
 
   protected handleDrop(event: DragEvent) {
     event.preventDefault();
     this._$dragging.set(false);
-    if (event.dataTransfer) this.selection.addPhotos(Array.from(event.dataTransfer.files));
+    if (event.dataTransfer) this.selectionService.addPhotos(Array.from(event.dataTransfer.files));
   }
 
   protected endDrag() {
@@ -41,12 +41,12 @@ export class PhotoUpload {
   }
 
   protected movePhoto(from: number, to: number) {
-    const index = this.selection.move(from, to);
+    const index = this.selectionService.move(from, to);
     if (index !== undefined) this._focusPhoto(index);
   }
 
   protected removePhoto(position: number) {
-    const index = this.selection.remove(position);
+    const index = this.selectionService.remove(position);
     if (index !== undefined) this._focusPhoto(index);
   }
 

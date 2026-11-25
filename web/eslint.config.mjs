@@ -10,17 +10,35 @@ function factoryName(expression) {
   return expression.property.name;
 }
 
-const signalNames = {
+const memberNames = {
   meta: {
     type: 'suggestion',
     schema: [],
-    messages: { prefix: 'Name this signal {{prefix}}{{name}}.' },
+    messages: {
+      prefix: 'Name this signal {{prefix}}{{name}}.',
+      service: 'Use {{prefix}}nameService for this injected service.',
+    },
   },
   create(context) {
+    const serviceImports = new Set();
     return {
+      ImportDeclaration(node) {
+        if (!node.source.value.endsWith('.service')) return;
+        for (const specifier of node.specifiers) serviceImports.add(specifier.local.name);
+      },
       PropertyDefinition(node) {
         if (node.key.type !== 'Identifier' || node.value?.type !== 'CallExpression') return;
-        if (!signalFactories.has(factoryName(node.value.callee))) return;
+        const factory = factoryName(node.value.callee);
+        const token = node.value.arguments[0];
+        if (factory === 'inject' && token?.type === 'Identifier' && serviceImports.has(token.name)) {
+          const prefix = node.accessibility === 'private' ? '_' : '';
+          const name = node.key.name;
+          if (!name.startsWith(prefix) || !/^[a-z][a-zA-Z0-9]*Service$/.test(name.slice(prefix.length))) {
+            context.report({ node: node.key, messageId: 'service', data: { prefix } });
+          }
+          return;
+        }
+        if (!signalFactories.has(factory)) return;
         const prefix = node.accessibility === 'private' ? '_$' : '$';
         const name = node.key.name;
         if (name.startsWith(prefix) && /^[a-z][a-zA-Z0-9]*$/.test(name.slice(prefix.length))) return;
@@ -37,7 +55,7 @@ export default tseslint.config(
   ...tseslint.configs.recommended,
   {
     files: ['src/**/*.ts'],
-    plugins: { vidoo: { rules: { 'signal-names': signalNames } } },
+    plugins: { vidoo: { rules: { 'member-names': memberNames } } },
     rules: {
       'vidoo/signal-names': 'error',
       '@typescript-eslint/explicit-member-accessibility': ['error', {

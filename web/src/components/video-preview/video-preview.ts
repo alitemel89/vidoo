@@ -9,11 +9,11 @@ import { VideoOrder } from '../../services/video-order.service';
   imports: [CurrencyPipe],
 })
 export class VideoPreview implements OnInit {
-  protected readonly video = inject(VideoOrder);
+  protected readonly videoOrderService = inject(VideoOrder);
   private readonly _$player = viewChild<ElementRef<HTMLVideoElement>>('player');
 
   public ngOnInit(): void {
-    void this.video.restore();
+    void this.videoOrderService.restore();
   }
 
   public reveal() {
