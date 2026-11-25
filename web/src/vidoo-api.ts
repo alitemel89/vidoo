@@ -1,6 +1,6 @@
-import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpParams, httpResource } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, map } from 'rxjs';
 
 export interface Pricing {
   amount: number;
@@ -28,14 +28,17 @@ export function errorMessage(error: unknown) {
 export class VidooApi {
   private readonly http = inject(HttpClient);
 
-  config() {
-    return firstValueFrom(this.http.get<Pricing>('/api/config'));
-  }
+  readonly pricing = httpResource<Pricing>(() => '/api/config');
 
   create(files: readonly File[]) {
     const body = new FormData();
     for (const file of files) body.append('photos', file);
-    return firstValueFrom(this.http.post<Order & Pricing>('/api/jobs', body));
+    return firstValueFrom(this.http.post<Order & Pricing>('/api/jobs', body).pipe(
+      map(({ id, amount, checkoutAvailable }) => ({
+        order: { id, amount },
+        pricing: { amount, checkoutAvailable },
+      })),
+    ));
   }
 
   details(id: string) {
@@ -55,7 +58,7 @@ export class VidooApi {
   payment(id: string, sessionId: string) {
     return firstValueFrom(this.http.get<{ paid: boolean }>(`${orderPath(id)}/payment`, {
       params: new HttpParams().set('session', sessionId),
-    }));
+    }).pipe(map(response => response.paid)));
   }
 
   download(id: string, sessionId: string) {

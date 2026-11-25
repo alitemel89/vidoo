@@ -1,3 +1,4 @@
+@let state = view();
 <header class="masthead"><a href="/" aria-label="Vidoo ana sayfa"><span class="mark" aria-hidden="true">▶</span> Vidoo</a></header>
 <main>
   <section class="intro">
@@ -8,58 +9,58 @@
     <section class="panel" aria-labelledby="photos-heading">
       <h2 id="photos-heading">Araç fotoğrafları</h2>
       <p>İlk fotoğraf videonun açılışında görünür.</p>
-      <label class="drop" [class.dragging]="dragOver()" (dragover)="handleDrag($event)"
-        (dragleave)="dragOver.set(false)" (drop)="handleDrop($event)">
+      <label class="drop" [class.dragging]="state.dragging" (dragover)="handleDrag($event)"
+        (dragleave)="endDrag()" (drop)="handleDrop($event)">
         <input #files id="files" type="file" accept="image/jpeg,image/png,image/webp" multiple
-          aria-label="Araç fotoğraflarını seç" [disabled]="creating()" (change)="choosePhotos(files)">
+          aria-label="Araç fotoğraflarını seç" [disabled]="state.creating" (change)="choosePhotos(files)">
         <span class="upload-icon" aria-hidden="true">↑</span>
         <strong>Fotoğraf seçin veya buraya bırakın</strong>
         <small>JPG, PNG, WebP · Fotoğraf başına en fazla 8 MB</small>
       </label>
       <ol class="photos" id="photos" aria-label="Video sırasına göre fotoğraflar">
-        @for (photo of photos(); track photo.url; let index = $index; let first = $first; let last = $last) {
+        @for (photo of state.photos; track photo.url; let index = $index; let first = $first; let last = $last) {
           <li>
             <img [src]="photo.url" alt="">
             <span>{{ photo.file.name }}</span>
             <div class="photo-actions">
               <button type="button" [attr.aria-label]="photo.file.name + ' – Yukarı taşı'"
-                [disabled]="creating() || first" (click)="move(index, index - 1)">↑</button>
+                [disabled]="state.creating || first" (click)="movePhoto(index, index - 1)">↑</button>
               <button type="button" [attr.aria-label]="photo.file.name + ' – Aşağı taşı'"
-                [disabled]="creating() || last" (click)="move(index, index + 1)">↓</button>
+                [disabled]="state.creating || last" (click)="movePhoto(index, index + 1)">↓</button>
               <button type="button" [attr.aria-label]="photo.file.name + ' – Kaldır'"
-                [disabled]="creating()" (click)="remove(index)">×</button>
+                [disabled]="state.creating" (click)="removePhoto(index)">×</button>
             </div>
           </li>
         }
       </ol>
       <div class="actions">
-        <span id="count">{{ photos().length }} / 5 fotoğraf</span>
-        <button type="button" class="primary" [disabled]="!canCreate()" (click)="create()">Önizleme oluştur</button>
+        <span id="count">{{ state.photos.length }} / 5 fotoğraf</span>
+        <button type="button" class="primary" [disabled]="!state.canCreate" (click)="createPreview()">Önizleme oluştur</button>
       </div>
-      <p role="status" aria-live="polite">{{ uploadMessage() }}</p>
+      <p role="status" aria-live="polite">{{ state.uploadMessage }}</p>
     </section>
     <section class="panel result" aria-labelledby="preview-heading">
       <div class="preview-header">
         <h2 id="preview-heading">Video önizleme</h2><span class="format">9:16 · MP4</span>
       </div>
       <div class="stage">
-        @if (preview(); as source) {
-          <video id="video" [src]="source" controls playsinline preload="metadata" (error)="previewError()"></video>
+        @if (state.preview; as source) {
+          <video id="video" [src]="source" controls playsinline preload="metadata" (error)="video.previewError()"></video>
         } @else {
           <p><span aria-hidden="true">▷</span>Önizleme burada oynatılır</p>
         }
       </div>
       <div class="actions purchase">
-        <span><strong>{{ price() }}</strong><small>Tek video · 720 × 1280</small></span>
-        @if (download(); as url) {
+        <span><strong>{{ state.price === null ? '—' : (state.price | currency:'EUR':'symbol':'1.2-2':'tr') }}</strong><small>Tek video · 720 × 1280</small></span>
+        @if (state.download; as url) {
           <a class="primary" [href]="url">Videoyu indir</a>
         } @else {
-          <button type="button" class="primary" [disabled]="!canBuy()" (click)="checkout()">Ödemeye geç</button>
+          <button type="button" class="primary" [disabled]="!state.canBuy" (click)="video.checkout()">Ödemeye geç</button>
         }
       </div>
-      <p role="status" aria-live="polite">{{ paymentMessage() }}</p>
-      @if (retryPayment()) {
-        <button type="button" (click)="checkPayment()">Ödemeyi tekrar kontrol et</button>
+      <p role="status" aria-live="polite">{{ state.paymentMessage }}</p>
+      @if (state.retryPayment) {
+        <button type="button" (click)="video.checkPayment()">Ödemeyi tekrar kontrol et</button>
       }
     </section>
   </div>
