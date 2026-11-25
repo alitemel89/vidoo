@@ -32,3 +32,12 @@ jobs:
       - run: npm run lint
       - run: npm run build
       - run: npm test
+      - name: Save web build
+        uses: actions/upload-artifact@v4
+        with:
+          name: vidoo-web
+          path: |
+            web/dist/browser/
+            web/server.mjs
+            web/render.mjs
+          if-no-files-found: error
