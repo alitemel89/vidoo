@@ -16,8 +16,8 @@ function errorMessage(error: unknown) {
 @Injectable()
 export class VideoOrder {
   private readonly _vidooApiService = inject(VidooApi);
-  private readonly _$order = signal<Order>();
-  private readonly _$updatedPricing = signal<Pricing>();
+  private readonly _$order = signal<Order | undefined>(undefined);
+  private readonly _$updatedPricing = signal<Pricing | undefined>(undefined);
   public readonly $order = this._$order.asReadonly();
   public readonly $pricing = computed(() => this._$updatedPricing() ??
     (this._vidooApiService.$pricing.hasValue() ? this._vidooApiService.$pricing.value() : undefined));
@@ -35,7 +35,7 @@ export class VideoOrder {
   private readonly _$paymentMessage = signal('');
   private readonly _$retryPayment = signal(false);
   public readonly $retryPayment = this._$retryPayment.asReadonly();
-  private readonly _$download = signal<string>();
+  private readonly _$download = signal<string | undefined>(undefined);
   public readonly $download = this._$download.asReadonly();
   public readonly $preview = computed(() => {
     const order = this.$order();
