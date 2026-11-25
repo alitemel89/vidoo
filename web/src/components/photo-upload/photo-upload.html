@@ -1,34 +1,33 @@
-@let state = $view();
 <section class="panel" aria-labelledby="photos-heading">
   <h2 id="photos-heading">Araç fotoğrafları</h2>
   <p>İlk fotoğraf videonun açılışında görünür.</p>
-  <label class="drop mt-5 grid cursor-pointer justify-items-center gap-2 rounded-xl border border-dashed border-[#a77658] bg-[#21150f] px-3 py-7 text-center" [class.dragging]="state.dragging" (dragover)="handleDrag($event)"
+  <label class="drop mt-5 grid cursor-pointer justify-items-center gap-2 rounded-xl border border-dashed border-[#a77658] bg-[#21150f] px-3 py-7 text-center" [class.dragging]="$dragging()" (dragover)="handleDrag($event)"
     (dragleave)="endDrag()" (drop)="handleDrop($event)">
     <input #files id="files" type="file" accept="image/jpeg,image/png,image/webp" multiple
-      aria-label="Araç fotoğraflarını seç" [disabled]="state.creating" (change)="choosePhotos(files)">
+      aria-label="Araç fotoğraflarını seç" [disabled]="selection.$creating()" (change)="choosePhotos(files)">
     <span class="grid size-10 place-items-center rounded-xl bg-[#492c1e] text-2xl text-accent" aria-hidden="true">↑</span>
     <strong>Fotoğraf seçin veya buraya bırakın</strong>
     <small class="text-[0.82rem] text-muted">JPG, PNG, WebP · Fotoğraf başına en fazla 8 MB</small>
   </label>
   <ol class="my-3 grid gap-2" id="photos" aria-label="Video sırasına göre fotoğraflar">
-    @for (photo of state.photos; track photo.url; let index = $index; let first = $first; let last = $last) {
+    @for (photo of selection.$photos(); track photo.url; let index = $index; let first = $first; let last = $last) {
       <li #photoRow class="grid grid-cols-[43px_minmax(0,1fr)_auto] items-center gap-2 rounded-lg bg-[#312018] px-1.5 py-1">
         <img class="h-[38px] w-[43px] rounded object-cover" [src]="photo.url" alt="">
         <span class="truncate text-[0.82rem]">{{ photo.file.name }}</span>
         <div class="photo-actions flex gap-1">
           <button type="button" [attr.aria-label]="photo.file.name + ' – Yukarı taşı'"
-            [disabled]="state.creating || first" (click)="movePhoto(index, index - 1)">↑</button>
+            [disabled]="selection.$creating() || first" (click)="movePhoto(index, index - 1)">↑</button>
           <button type="button" [attr.aria-label]="photo.file.name + ' – Aşağı taşı'"
-            [disabled]="state.creating || last" (click)="movePhoto(index, index + 1)">↓</button>
+            [disabled]="selection.$creating() || last" (click)="movePhoto(index, index + 1)">↓</button>
           <button type="button" [attr.aria-label]="photo.file.name + ' – Kaldır'"
-            [disabled]="state.creating" (click)="removePhoto(index)">×</button>
+            [disabled]="selection.$creating()" (click)="removePhoto(index)">×</button>
         </div>
       </li>
     }
   </ol>
   <div class="flex items-center justify-between gap-2">
-    <span id="count" class="text-[0.82rem] text-muted">{{ state.photos.length }} / {{ state.maxPhotos }} fotoğraf</span>
-    <button type="button" class="primary" [disabled]="!state.canCreate" (click)="createPreview()">Önizleme oluştur</button>
+    <span id="count" class="text-[0.82rem] text-muted">{{ selection.$photos().length }} / {{ selection.maxPhotos }} fotoğraf</span>
+    <button type="button" class="primary" [disabled]="!selection.$canCreate()" (click)="createPreview()">Önizleme oluştur</button>
   </div>
-  <p role="status" aria-live="polite">{{ state.uploadMessage }}</p>
+  <p role="status" aria-live="polite">{{ selection.$uploadMessage() }}</p>
 </section>

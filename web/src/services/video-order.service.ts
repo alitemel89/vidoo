@@ -21,6 +21,10 @@ export class VideoOrder {
   public readonly $order = this._$order.asReadonly();
   public readonly $pricing = computed(() => this._$updatedPricing() ??
     (this.api.$pricing.hasValue() ? this.api.$pricing.value() : undefined));
+  public readonly $priceInEuros = computed(() => {
+    const amount = this.$order()?.amount ?? this.$pricing()?.amount;
+    return amount === undefined ? undefined : amount / 100;
+  });
   private readonly _$creating = signal(false);
   public readonly $creating = this._$creating.asReadonly();
   private readonly _$checkingOut = signal(false);
