@@ -11,9 +11,9 @@ function orderPath(id: string) {
 export class VidooApi {
   private readonly http = inject(HttpClient);
 
-  readonly pricing = httpResource<Pricing>(() => '/api/config');
+  public readonly $pricing = httpResource<Pricing>(() => '/api/config');
 
-  create(files: readonly File[]) {
+  public create(files: readonly File[]) {
     const body = new FormData();
     for (const file of files) body.append('photos', file);
     return firstValueFrom(this.http.post<Order & Pricing>('/api/jobs', body).pipe(
@@ -24,27 +24,27 @@ export class VidooApi {
     ));
   }
 
-  details(id: string) {
+  public details(id: string) {
     return firstValueFrom(this.http.get<Order>(`${orderPath(id)}/details`));
   }
 
-  preview(id: string) {
+  public preview(id: string) {
     return `${orderPath(id)}/preview`;
   }
 
-  checkout(id: string) {
+  public checkout(id: string) {
     return firstValueFrom(this.http.post<{ url: string; sessionId: string }>(
       `${orderPath(id)}/checkout`, null,
     ));
   }
 
-  payment(id: string, sessionId: string) {
+  public payment(id: string, sessionId: string) {
     return firstValueFrom(this.http.get<{ paid: boolean }>(`${orderPath(id)}/payment`, {
       params: new HttpParams().set('session', sessionId),
     }).pipe(map(response => response.paid)));
   }
 
-  download(id: string, sessionId: string) {
+  public download(id: string, sessionId: string) {
     return `${orderPath(id)}/download?${new URLSearchParams({ session: sessionId })}`;
   }
 }

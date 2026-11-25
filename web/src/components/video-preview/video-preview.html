@@ -1,4 +1,4 @@
-@let state = view();
+@let state = $view();
 <section class="panel" aria-labelledby="preview-heading">
   <div class="flex items-center justify-between gap-2">
     <h2 id="preview-heading">Video önizleme</h2>
@@ -13,7 +13,7 @@
   </div>
   <div class="flex items-center justify-between gap-2">
     <div>
-      <strong class="text-xl">{{ state.price === null ? '—' : (state.price | currency:'EUR':'symbol':'1.2-2':'tr') }}</strong>
+      <strong class="text-xl">{{ state.price === undefined ? '—' : (state.price | currency:'EUR':'symbol':'1.2-2':'tr') }}</strong>
       <small class="block text-[0.82rem] text-muted">Tek video · 720 × 1280</small>
     </div>
     @if (state.download; as url) {

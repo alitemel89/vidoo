@@ -10,25 +10,25 @@ import { VideoOrder } from '../../services/video-order.service';
 })
 export class VideoPreview implements OnInit {
   protected readonly video = inject(VideoOrder);
-  private readonly player = viewChild<ElementRef<HTMLVideoElement>>('player');
+  private readonly _$player = viewChild<ElementRef<HTMLVideoElement>>('player');
 
-  protected readonly view = computed(() => {
-    const amount = this.video.order()?.amount ?? this.video.pricing()?.amount;
+  protected readonly $view = computed(() => {
+    const amount = this.video.$order()?.amount ?? this.video.$pricing()?.amount;
     return {
-      preview: this.video.preview(),
-      price: amount === undefined ? null : amount / 100,
-      download: this.video.download(),
-      canBuy: this.video.canBuy(),
-      paymentMessage: this.video.paymentStatus(),
-      retryPayment: this.video.retryPayment(),
+      preview: this.video.$preview(),
+      price: amount === undefined ? undefined : amount / 100,
+      download: this.video.$download(),
+      canBuy: this.video.$canBuy(),
+      paymentMessage: this.video.$paymentStatus(),
+      retryPayment: this.video.$retryPayment(),
     };
   });
 
-  ngOnInit(): void {
+  public ngOnInit(): void {
     void this.video.restore();
   }
 
-  reveal() {
-    requestAnimationFrame(() => this.player()?.nativeElement.scrollIntoView({ block: 'nearest' }));
+  public reveal() {
+    requestAnimationFrame(() => this._$player()?.nativeElement.scrollIntoView({ block: 'nearest' }));
   }
 }

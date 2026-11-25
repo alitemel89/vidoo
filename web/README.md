@@ -30,3 +30,12 @@ Yerel entegrasyon testi gerçek FFmpeg çıktısı ve sahte Stripe API yanıtlar
 ```sh
 npm test
 ```
+
+## TypeScript adlandırma
+
+`npm run lint` web kaynaklarını kontrol eder. Sınıf üyelerinde erişim belirteci açıkça yazılır. Template'e ait üyeler `protected`, dışarı kullanılan üyeler `public`, sınıf içi üyeler `private` olur.
+
+- Özel sinyal: `private readonly _$loading = signal(false)`
+- Dışarı açılan sinyal: `public readonly $loading = this._$loading.asReadonly()`
+- Özel metot: `private _load()`
+- Veri henüz yoksa: `signal<Order>()`. Başlangıç durumu belli olan bayraklar, listeler ve metinler sırasıyla `false`, `[]` ve `''` ile başlar.

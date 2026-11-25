@@ -12,68 +12,68 @@ import { VideoOrder } from '../../services/video-order.service';
 export class PhotoUpload {
   private readonly selection = inject(PhotoSelection);
   private readonly video = inject(VideoOrder);
-  private readonly dragging = signal(false);
-  private readonly fileInput = viewChild.required<ElementRef<HTMLInputElement>>('files');
-  private readonly photoRows = viewChildren<ElementRef<HTMLLIElement>>('photoRow');
+  private readonly _$dragging = signal(false);
+  private readonly _$fileInput = viewChild.required<ElementRef<HTMLInputElement>>('files');
+  private readonly _$photoRows = viewChildren<ElementRef<HTMLLIElement>>('photoRow');
 
-  readonly previewCreated = output<void>();
+  public readonly previewCreated = output<void>();
 
-  protected readonly view = computed(() => {
-    const photos = this.selection.photos();
-    const creating = this.video.creating();
+  protected readonly $view = computed(() => {
+    const photos = this.selection.$photos();
+    const creating = this.video.$creating();
     return {
       photos,
       creating,
-      dragging: this.dragging(),
+      dragging: this._$dragging(),
       maxPhotos: MAX_PHOTOS,
-      canCreate: !creating && !this.video.checkingOut() && photos.length >= MIN_PHOTOS,
-      uploadMessage: this.selection.message() || this.video.uploadMessage(),
+      canCreate: !creating && !this.video.$checkingOut() && photos.length >= MIN_PHOTOS,
+      uploadMessage: this.selection.$message() || this.video.$uploadMessage(),
     };
   });
 
   protected async createPreview() {
-    if (!this.view().canCreate) return;
+    if (!this.$view().canCreate) return;
     this.selection.clearMessage();
-    const created = await this.video.create(this.selection.photos().map(photo => photo.file));
+    const created = await this.video.create(this.selection.$photos().map(photo => photo.file));
     if (created) this.previewCreated.emit();
   }
 
   protected choosePhotos(input: HTMLInputElement) {
-    if (!this.video.creating() && input.files) this.selection.addPhotos(Array.from(input.files));
+    if (!this.video.$creating() && input.files) this.selection.addPhotos(Array.from(input.files));
     input.value = '';
   }
 
   protected handleDrag(event: DragEvent) {
     event.preventDefault();
-    if (!this.video.creating()) this.dragging.set(true);
+    if (!this.video.$creating()) this._$dragging.set(true);
   }
 
   protected handleDrop(event: DragEvent) {
     event.preventDefault();
-    this.dragging.set(false);
-    if (!this.video.creating() && event.dataTransfer) this.selection.addPhotos(Array.from(event.dataTransfer.files));
+    this._$dragging.set(false);
+    if (!this.video.$creating() && event.dataTransfer) this.selection.addPhotos(Array.from(event.dataTransfer.files));
   }
 
   protected endDrag() {
-    this.dragging.set(false);
+    this._$dragging.set(false);
   }
 
   protected movePhoto(from: number, to: number) {
-    if (this.video.creating()) return;
+    if (this.video.$creating()) return;
     const index = this.selection.move(from, to);
-    if (index !== undefined) this.focusPhoto(index);
+    if (index !== undefined) this._focusPhoto(index);
   }
 
   protected removePhoto(position: number) {
-    if (this.video.creating()) return;
+    if (this.video.$creating()) return;
     const index = this.selection.remove(position);
-    if (index !== undefined) this.focusPhoto(index);
+    if (index !== undefined) this._focusPhoto(index);
   }
 
-  private focusPhoto(index: number) {
+  private _focusPhoto(index: number) {
     requestAnimationFrame(() => {
-      const button = this.photoRows()[index]?.nativeElement.querySelector<HTMLButtonElement>('button:not(:disabled)');
-      (button ?? this.fileInput().nativeElement).focus();
+      const button = this._$photoRows()[index]?.nativeElement.querySelector<HTMLButtonElement>('button:not(:disabled)');
+      (button ?? this._$fileInput().nativeElement).focus();
     });
   }
 }
