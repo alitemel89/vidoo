@@ -18,11 +18,16 @@ export async function renderVideos(directory, images) {
     const segment = `scene-${index}.mp4`;
     await writeFile(`${directory}/${filename}`, image.data);
     await run('-threads', '2', '-max_pixels', '30000000', '-f', 'image2',
-      '-c:v', image.decoder, '-i', filename, '-map', '0:v:0', '-an', '-map_metadata', '-1',
-      '-vf', 'scale=720:1280:force_original_aspect_ratio=decrease:force_divisible_by=2,setsar=1,' +
-        'pad=720:1280:(ow-iw)/2:(oh-ih)/2:0x17100d,' +
-        "zoompan=z='1+on*0.0007':x='iw/2-iw/zoom/2':y='ih/2-ih/zoom/2':d=72:s=720x1280:fps=24," +
-        'fade=t=in:d=0.16,fade=t=out:st=2.82:d=0.18',
+      '-c:v', image.decoder, '-i', filename, '-an', '-map_metadata', '-1',
+      '-filter_complex_threads', '2', '-filter_complex',
+      "[0:v]split[back][front];" +
+        "[back]scale=180:320:force_original_aspect_ratio=increase:force_divisible_by=2," +
+        "crop=180:320,boxblur=12:2,scale=720:1280,setsar=1[canvas];" +
+        "[front]scale=696:1040:force_original_aspect_ratio=decrease:force_divisible_by=2,setsar=1[photo];" +
+        "[canvas][photo]overlay=(W-w)/2:(H-h)/2," +
+        "zoompan=z='1+" + (index % 2 === 0 ? "on" : "(71-on)") +
+        "*0.00045':x='iw/2-iw/zoom/2':y='ih/2-ih/zoom/2':d=72:s=720x1280:fps=24[out]",
+      '-map', '[out]',
       '-frames:v', '72', ...encode, segment);
     segments.push(segment);
   }
