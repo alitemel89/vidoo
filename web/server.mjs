@@ -107,7 +107,7 @@ async function streamVideo(request, response, filename, download = false) {
 
 export async function createVidooServer({
   dataDir = resolve(process.env.VIDOO_DATA_DIR ?? 'vidoo-data'),
-  baseUrl = process.env.VIDOO_BASE_URL ?? 'http://localhost:3000',
+  baseUrl = process.env.VIDOO_BASE_URL ?? process.env.RENDER_EXTERNAL_URL ?? 'http://localhost:3000',
   stripeKey = process.env.STRIPE_SECRET_KEY,
   amount = Number(process.env.VIDOO_PRICE_CENTS ?? 499),
   stripeFetch = fetch,
