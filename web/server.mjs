@@ -111,6 +111,8 @@ export async function createVidooServer({
   stripeKey = process.env.STRIPE_SECRET_KEY,
   amount = Number(process.env.VIDOO_PRICE_CENTS ?? 499),
   stripeFetch = fetch,
+  higgsfieldCredentials = process.env.HF_CREDENTIALS,
+  higgsfieldFetch = fetch,
 } = {}) {
   const origin = new URL(baseUrl).origin;
   if (!Number.isSafeInteger(amount) || amount < 50 || amount > 99999999) {
@@ -118,6 +120,30 @@ export async function createVidooServer({
   }
   await mkdir(dataDir, { recursive: true, mode: 0o700 });
   let rendering = 0;
+
+  let higgsfieldCheck;
+  let higgsfieldCheckExpiresAt = 0;
+
+  async function verifyHiggsfield() {
+    const credentials = higgsfieldCredentials?.trim();
+    if (!credentials) return 'missing';
+    try {
+      const result = await higgsfieldFetch('https://api.higgsfield.ai/files/generate-upload-url', {
+        method: 'POST',
+        headers: { Authorization: `Key ${credentials}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content_type: 'image/png' }),
+        redirect: 'error',
+        signal: AbortSignal.timeout(8_000),
+      });
+      // Requesting a signed URL checks authentication without uploading or generating media.
+      await result.body?.cancel();
+      if (result.ok) return 'connected';
+      if (result.status === 401 || result.status === 403) return 'rejected';
+      return 'unavailable';
+    } catch {
+      return 'unavailable';
+    }
+  }
 
   async function stripe(path, options = {}) {
     if (!stripeKey) throw new HttpError(503, 'Ödeme şu anda kullanılamıyor.');
@@ -174,6 +200,13 @@ export async function createVidooServer({
       }
       if (method === 'POST' && request.headers.origin && request.headers.origin !== origin) {
         throw new HttpError(403, 'Bu istek kabul edilmedi.');
+      }
+      if (method === 'POST' && url.pathname === '/api/higgsfield/check') {
+        if (Date.now() >= higgsfieldCheckExpiresAt) {
+          higgsfieldCheckExpiresAt = Date.now() + 30_000;
+          higgsfieldCheck = verifyHiggsfield();
+        }
+        return json(response, 200, { status: await higgsfieldCheck });
       }
       if (method === 'POST' && url.pathname === '/api/jobs') {
         if (rendering >= 2) {

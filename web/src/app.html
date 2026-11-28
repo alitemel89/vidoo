@@ -13,4 +13,11 @@
     <vidoo-photo-upload class="block min-w-0" (previewCreated)="preview.reveal()" />
     <vidoo-video-preview #preview class="block min-w-0" />
   </div>
+  <section class="mt-7">
+    <button class="rounded border px-3 py-2 disabled:opacity-50" type="button"
+      [disabled]="$checkingHiggsfield()" (click)="checkHiggsfield()">
+      Higgsfield bağlantısını test et
+    </button>
+    <p class="mt-2" role="status">{{ $higgsfieldMessage() }}</p>
+  </section>
 </main>

@@ -14,6 +14,12 @@ export class VidooApi {
 
   public readonly $pricing = httpResource<Pricing>(() => '/api/config');
 
+  public checkHiggsfield() {
+    return firstValueFrom(this._httpClient.post<{
+      status: 'connected' | 'missing' | 'rejected' | 'unavailable';
+    }>('/api/higgsfield/check', null));
+  }
+
   public create(files: readonly File[]) {
     const body = new FormData();
     for (const file of files) body.append('photos', file);
